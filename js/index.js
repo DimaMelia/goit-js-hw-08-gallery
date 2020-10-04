@@ -61,10 +61,8 @@ function onRightBtnPress(event) {
     return;
   }
   let next = galleryOriginalImages.indexOf(lightBoxImgRef.src) + 1;
-  if (next === galleryOriginalImages.length) {
+  if (next >= galleryOriginalImages.length) {
     next = 0;
-  } else {
-    next += 1;
   }
   lightBoxImgRef.src = galleryOriginalImages[next];
 }

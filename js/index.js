@@ -1,19 +1,20 @@
 import galleryItems from "./data/gallery-items.js";
 
-const galleryOriginalImages = galleryItems.map((item) => item.original);
-const galleryRef = document.querySelector("ul.js-gallery");
-const lightBoxRef = document.querySelector(".js-lightbox");
-const lightBoxImgRef = document.querySelector(".lightbox__image");
-const lightBoxCloseBtnRef = document.querySelector(
-  '[data-action="close-lightbox"]'
-);
+const refs = {
+  gallery: document.querySelector("ul.js-gallery"),
+  lightBox: document.querySelector(".js-lightbox"),
+  lightBoxImg: document.querySelector(".lightbox__image"),
+  closeLightBoxBtn: document.querySelector('[data-action="close-lightbox"]'),
+  lightBoxOverlay: document.querySelector(".lightbox__overlay"),
+};
 
-const lightBoxOverlay = document.querySelector(".lightbox__overlay");
+const imgCount = galleryItems.length;
+let current = 0;
 
-const createGalleryItemsMarkup = (items) =>
-  items
+function createGalleryItemsMarkup(items) {
+  return items
     .map(
-      ({ preview, original, description }) => `<li class="gallery__item">
+      ({ preview, original, description }, index) => `<li class="gallery__item">
     <a
         class="gallery__link"
         href="${original}"
@@ -22,64 +23,58 @@ const createGalleryItemsMarkup = (items) =>
             class="gallery__image"
             src="${preview}"
             data-source="${original}"
+            data-index="${index}"
             alt="${description}"
         />
     </a> 
 </li>`
     )
     .join("");
+}
 
-galleryRef.innerHTML = createGalleryItemsMarkup(galleryItems);
+refs.gallery.innerHTML = createGalleryItemsMarkup(galleryItems);
 
-function showLightBox(event) {
-  event.preventDefault();
-  if (!event.target.classList.contains("gallery__image")) {
+function showLightBox(e) {
+  e.preventDefault();
+  if (!e.target.classList.contains("gallery__image")) {
     return;
   }
-  window.addEventListener("keydown", onEscPress);
-  lightBoxRef.classList.add("is-open");
-  lightBoxImgRef.src = event.target.dataset.source;
-  lightBoxImgRef.alt = event.target.alt;
+  window.addEventListener("keydown", onKeyPressHandler);
+  refs.lightBox.classList.add("is-open");
+  refs.lightBoxImg.src = e.target.dataset.source;
+  refs.lightBoxImg.alt = e.target.alt;
+  current = e.target.dataset.index;
+}
+
+function onKeyPressHandler(e) {
+  if (e.code === "Escape") {
+    closeLightBox();
+  }
+  if (e.code === "ArrowRight") onRightKeyPress();
+  if (e.code === "ArrowLeft") onLeftKeyPress();
+  refs.lightBoxImg.src = galleryItems[current].original;
 }
 
 function closeLightBox() {
-  window.removeEventListener("keydown", onEscPress);
-  lightBoxRef.classList.remove("is-open");
-  lightBoxImgRef.src = "";
+  window.removeEventListener("keydown", onKeyPressHandler);
+  refs.lightBox.classList.remove("is-open");
+  refs.lightBoxImg.src = "";
 }
 
-function onEscPress(event) {
-  if (event.code === "Escape") {
-    closeLightBox();
+function onRightKeyPress() {
+  current += 1;
+  if (current >= imgCount) {
+    current = 0;
   }
-  onRightBtnPress(event);
-  onLeftBtnPress(event);
 }
 
-function onRightBtnPress(event) {
-  if (!(event.code === "ArrowRight")) {
-    return;
+function onLeftKeyPress() {
+  current -= 1;
+  if (current < 0) {
+    current = imgCount - 1;
   }
-  let next = galleryOriginalImages.indexOf(lightBoxImgRef.src) + 1;
-  if (next >= galleryOriginalImages.length) {
-    next = 0;
-  }
-  lightBoxImgRef.src = galleryOriginalImages[next];
 }
 
-function onLeftBtnPress(event) {
-  if (!(event.code === "ArrowLeft")) {
-    return;
-  }
-  let prev = galleryOriginalImages.indexOf(lightBoxImgRef.src);
-  if (prev === 0) {
-    prev = galleryOriginalImages.length - 1;
-  } else {
-    prev -= 1;
-  }
-  lightBoxImgRef.src = galleryOriginalImages[prev];
-}
-
-galleryRef.addEventListener("click", showLightBox);
-lightBoxCloseBtnRef.addEventListener("click", closeLightBox);
-lightBoxOverlay.addEventListener("click", closeLightBox);
+refs.gallery.addEventListener("click", showLightBox);
+refs.lightBoxOverlay.addEventListener("click", closeLightBox);
+refs.closeLightBoxBtn.addEventListener("click", closeLightBox);
